@@ -44,8 +44,8 @@ dev = [
 screenshot-tool = "screenshot_tool:main"
 
 [project.urls]
-"Source" = "https://github.com/huang/screenshot_tool"
-"Issues" = "https://github.com/huang/screenshot_tool/issues"
+"Source" = "https://github.com/Boris-cpu666/screenshot_tool"
+"Issues" = "https://github.com/Boris-cpu666/screenshot_tool/issues"
 
 [tool.setuptools]
 py-modules = ["screenshot_tool"]

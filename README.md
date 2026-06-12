@@ -1,6 +1,6 @@
 # Screenshot Tool
 
-[![CI](https://github.com/huang/screenshot_tool/actions/workflows/ci.yml/badge.svg)](https://github.com/huang/screenshot_tool/actions/workflows/ci.yml)
+[![CI](https://github.com/Boris-cpu666/screenshot_tool/actions/workflows/ci.yml/badge.svg)](https://github.com/Boris-cpu666/screenshot_tool/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 
