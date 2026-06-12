@@ -56,6 +56,12 @@ pyinstaller screenshot_tool.spec
 
 输出：`dist/screenshot_tool/screenshot_tool.exe`（同目录有 `_internal/` 依赖）。
 
+**生成 Windows 安装程序**（带卸载 + 开始菜单 + 桌面快捷方式）：
+
+1. 安装 [Inno Setup 6+](https://jrsoftware.org/isinfo.php)
+2. 双击 `build_installer.bat`（一键 build）
+3. 输出：`installer_output/screenshot_tool-v0.1.0-setup.exe`
+
 ## 🏗️ 项目结构 / Project Structure
 
 ```

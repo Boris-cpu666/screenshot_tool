@@ -8,3 +8,4 @@ build/
 dist/
 _internal/
 screenshot_tool.exe
+installer_output/
