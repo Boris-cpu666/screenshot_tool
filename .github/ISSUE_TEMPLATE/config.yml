@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📖 Documentation
+    url: https://github.com/Boris-cpu666/screenshot_tool/blob/master/README.md
+    about: Read the README first — installation, usage, and FAQ.
+  - name: 🎨 Design Spec
+    url: https://github.com/Boris-cpu666/screenshot_tool/blob/master/docs/superpowers/specs/2026-06-12-screenshot-tool-design.md
+    about: Architecture, design decisions, and feature scope.
