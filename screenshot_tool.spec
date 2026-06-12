@@ -39,6 +39,7 @@ exe = EXE(
     [],
     exclude_binaries=True,  # onedir 关键：可执行文件不含二进制
     name='screenshot_tool',
+    icon='icon.ico',         # 应用图标（任务栏 + Alt+Tab 切换时显示）
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
