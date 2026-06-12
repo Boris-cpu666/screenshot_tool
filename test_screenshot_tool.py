@@ -149,3 +149,49 @@ def test_screenshot_overlay_emits_region_selected(qtbot):
     r = captured[0]
     # QRect(p1, p2) 包含两端（inclusive），所以 300-100+1=201, 250-80+1=171
     assert (r.left(), r.top(), r.width(), r.height()) == (100, 80, 201, 171)
+
+
+def test_screenshot_overlay_esc_cancels(qtbot):
+    """按 Esc 应 emit cancelled。"""
+    from PyQt5.QtCore import Qt
+    from PyQt5.QtGui import QKeyEvent
+    from screenshot_tool import ScreenshotOverlay
+
+    overlay = ScreenshotOverlay()
+    qtbot.addWidget(overlay)
+    overlay.show()
+    qtbot.waitExposed(overlay)
+
+    cancelled = []
+    overlay.cancelled.connect(lambda: cancelled.append(True))
+
+    event = QKeyEvent(QKeyEvent.KeyPress, Qt.Key_Escape, Qt.NoModifier)
+    overlay.keyPressEvent(event)
+
+    assert cancelled == [True]
+
+
+def test_screenshot_overlay_right_click_cancels(qtbot):
+    """鼠标右键应 emit cancelled。"""
+    from PyQt5.QtCore import QEvent, QPoint, Qt
+    from PyQt5.QtGui import QMouseEvent
+    from screenshot_tool import ScreenshotOverlay
+
+    overlay = ScreenshotOverlay()
+    qtbot.addWidget(overlay)
+    overlay.show()
+    qtbot.waitExposed(overlay)
+
+    cancelled = []
+    overlay.cancelled.connect(lambda: cancelled.append(True))
+
+    evt = QMouseEvent(
+        QEvent.MouseButtonPress,
+        QPoint(50, 50),
+        Qt.RightButton,
+        Qt.RightButton,
+        Qt.NoModifier,
+    )
+    overlay.mousePressEvent(evt)
+
+    assert cancelled == [True]
