@@ -60,28 +60,38 @@ pyinstaller screenshot_tool.spec
 
 1. 安装 [Inno Setup 6+](https://jrsoftware.org/isinfo.php)
 2. 双击 `build_installer.bat`（一键 build）
-3. 输出：`installer_output/screenshot_tool-v0.1.0-setup.exe`
+3. 输出：`installer_output/screenshot_tool-v0.1.1-setup.exe`
 
 ## 🏗️ 项目结构 / Project Structure
 
 ```
 screenshot_tool/
-├── .github/workflows/ci.yml   # GitHub Actions CI
-├── docs/                      # 设计文档
+├── .github/
+│   ├── workflows/ci.yml       # GitHub Actions CI (4 Python × Windows)
+│   └── ISSUE_TEMPLATE/        # bug / feature / config
+├── docs/
+│   ├── USER_GUIDE.md          # 中文用户手册
 │   └── superpowers/
 │       ├── specs/             # 设计规格
 │       └── plans/             # 实施计划
+├── installer/
+│   └── screenshot_tool.iss    # Inno Setup 安装脚本
 ├── .gitignore
 ├── LICENSE                    # MIT
 ├── README.md                  # 本文件
+├── CHANGELOG.md
 ├── pyproject.toml             # Python 元数据
 ├── requirements.txt           # 运行时依赖
-├── requirements-dev.txt       # 开发/测试依赖
+├── requirements-dev.txt       # 开发/测试 + pyinstaller 依赖
 ├── pytest.ini
 ├── screenshot_tool.py         # 主程序（~250 行）
-├── screenshot_tool.spec       # PyInstaller 配置
+├── screenshot_tool.spec       # PyInstaller 配置（含 icon='icon.ico'）
 ├── test_screenshot_tool.py    # 测试（9 个）
-└── manual_check.py            # 视觉调试脚本
+├── manual_check.py            # 视觉调试脚本
+├── build_icon.py              # 重新生成 icon.ico / icon.png
+├── build_installer.bat        # 一键 build Inno Setup 安装程序
+├── icon.ico                   # 应用图标（多尺寸 16/32/48/64/128/256）
+└── icon.png                   # 256x256 PNG 预览
 ```
 
 ## 🤝 贡献 / Contributing
