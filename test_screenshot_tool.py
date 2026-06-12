@@ -43,3 +43,17 @@ def test_save_to_desktop_collision_appends_suffix(fake_home):
         path = save_to_desktop(_one_pixel_image())
 
     assert path.name == "screenshot_20260612_153022_2.png"
+
+
+def test_save_to_desktop_falls_back_when_no_desktop(tmp_path, monkeypatch):
+    """HOME 下没有 Desktop 目录时，应自动创建；仍失败则降级到 HOME。"""
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("USERPROFILE", str(tmp_path))
+    # 不创建 Desktop/，save_to_desktop 应该自己 mkdir
+
+    with freeze_time("2026-06-12 15:30:22"):
+        path = save_to_desktop(_one_pixel_image())
+
+    assert path.name == "screenshot_20260612_153022.png"
+    assert path.parent.exists()
+    assert path.parent.is_dir()
