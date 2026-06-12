@@ -34,7 +34,9 @@ def capture_region(rect, screen) -> Image.Image:
     import mss
     with mss.mss() as sct:
         shot = sct.grab(monitor)
-        return Image.frombytes("RGB", shot.size, shot.rgb)
+        # mss.Shot.bgra is BGRX (4 bytes/pixel, X = padding). PIL's "raw" decoder
+        # with "BGRX" args converts BGRX → RGB, ignoring the X channel.
+        return Image.frombytes("RGB", shot.size, bytes(shot.bgra), "raw", "BGRX")
 
 
 def copy_to_clipboard(*args, **kwargs):

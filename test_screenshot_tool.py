@@ -64,27 +64,35 @@ def test_capture_region_returns_pil_image(monkeypatch):
     from PyQt5.QtCore import QRect
     from PyQt5.QtGui import QGuiApplication
 
-    # 给一个 RGB 2x2 的 raw bytes
-    raw_bytes = bytes([255, 0, 0,   0, 255, 0,
-                       0, 0, 255,   255, 255, 255])
+    # BGRX 2x2 (4 bytes per pixel): B, G, R, X
+    # Top-left = pure red    → BGRX = (0, 0, 255, 0)
+    # Top-right = pure green → BGRX = (0, 255, 0, 0)
+    # Bottom-left = pure blue → BGRX = (255, 0, 0, 0)
+    # Bottom-right = white   → BGRX = (255, 255, 255, 0)
+    bgra_bytes = bytes([
+        0, 0, 255, 0,    # top-left: pure red in BGRX
+        0, 255, 0, 0,    # top-right: pure green in BGRX
+        255, 0, 0, 0,    # bottom-left: pure blue in BGRX
+        255, 255, 255, 0 # bottom-right: pure white in BGRX
+    ])
 
     class _FakeSCT:
         def __init__(self): pass
         def __enter__(self): return self
         def __exit__(self, *a): return False
         def grab(self, monitor):
-            # 校验传给 mss 的矩形坐标
+            # 校验传给 mss 的矩形坐标（无 DPI 缩放）
             assert monitor == {"left": 0, "top": 0, "width": 2, "height": 2}
-            from mss.tools import to_png  # 仅供 mock
             class _Shot:
-                def __init__(self, raw, size):
-                    self.rgb = raw
+                def __init__(self, bgra, size):
+                    self.bgra = bgra
                     self.size = size
-            return _Shot(raw_bytes, (2, 2))
+                    self.width = size[0]
+                    self.height = size[1]
+            return _Shot(bgra_bytes, (2, 2))
 
     monkeypatch.setattr("mss.mss", lambda: _FakeSCT())
 
-    # capture_region 需要 QScreen，从 QGuiApplication 拿
     app = QGuiApplication.instance() or QGuiApplication([])
     screen = app.primaryScreen()
 
@@ -93,3 +101,8 @@ def test_capture_region_returns_pil_image(monkeypatch):
     assert isinstance(img, Image.Image)
     assert img.size == (2, 2)
     assert img.mode == "RGB"
+    # 像素内容断言 — 验证 BGRX → RGB 转换正确（不是反过来）
+    assert img.getpixel((0, 0)) == (255, 0, 0)    # top-left: 红色
+    assert img.getpixel((1, 0)) == (0, 255, 0)    # top-right: 绿色
+    assert img.getpixel((0, 1)) == (0, 0, 255)    # bottom-left: 蓝色
+    assert img.getpixel((1, 1)) == (255, 255, 255) # bottom-right: 白色
