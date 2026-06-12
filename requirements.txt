@@ -1,0 +1,6 @@
+PyQt5>=5.15
+mss>=9.0
+keyboard>=0.13
+pytest>=7.0
+pytest-qt>=4.0
+freezegun>=1.2
