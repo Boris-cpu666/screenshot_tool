@@ -30,6 +30,7 @@ dependencies = [
     "PyQt5>=5.15",
     "mss>=9.0",
     "keyboard>=0.13",
+    "Pillow>=9.0",
 ]
 
 [project.optional-dependencies]
