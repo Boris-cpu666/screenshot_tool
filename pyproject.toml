@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "screenshot-tool"
+version = "0.1.0"
+description = "Lightweight Windows screenshot tool — global hotkey + tray + clipboard"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "huang"}]
+keywords = ["screenshot", "windows", "tray", "hotkey", "pyqt5", "clipboard"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Win32 (MS Windows)",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: Microsoft :: Windows :: Windows 10",
+    "Operating System :: Microsoft :: Windows :: Windows 11",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Multimedia :: Graphics :: Capture",
+    "Topic :: Utilities",
+]
+dependencies = [
+    "PyQt5>=5.15",
+    "mss>=9.0",
+    "keyboard>=0.13",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-qt>=4.0",
+    "freezegun>=1.2",
+    "pyinstaller>=6.0",
+]
+
+[project.scripts]
+screenshot-tool = "screenshot_tool:main"
+
+[project.urls]
+"Source" = "https://github.com/huang/screenshot_tool"
+"Issues" = "https://github.com/huang/screenshot_tool/issues"
+
+[tool.setuptools]
+py-modules = ["screenshot_tool"]
+
+[tool.pytest.ini_options]
+qt_api = "pyqt5"
+testpaths = ["."]
