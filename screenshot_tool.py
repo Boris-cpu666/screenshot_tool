@@ -39,5 +39,14 @@ def capture_region(rect, screen) -> Image.Image:
         return Image.frombytes("RGB", shot.size, bytes(shot.bgra), "raw", "BGRX")
 
 
-def copy_to_clipboard(*args, **kwargs):
-    raise NotImplementedError
+def copy_to_clipboard(image: Image.Image) -> None:
+    """把 PIL.Image 复制到 Windows 剪贴板。"""
+    from PyQt5.QtGui import QImage
+    from PyQt5.QtWidgets import QApplication
+
+    # PIL → QImage（共用内存，不复制）
+    img = image.convert("RGBA")
+    data = img.tobytes("raw", "RGBA")
+    qimg = QImage(data, img.width, img.height, QImage.Format_RGBA8888)
+
+    QApplication.clipboard().setImage(qimg)

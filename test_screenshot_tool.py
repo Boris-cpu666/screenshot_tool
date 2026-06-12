@@ -106,3 +106,19 @@ def test_capture_region_returns_pil_image(monkeypatch):
     assert img.getpixel((1, 0)) == (0, 255, 0)    # top-right: 绿色
     assert img.getpixel((0, 1)) == (0, 0, 255)    # bottom-left: 蓝色
     assert img.getpixel((1, 1)) == (255, 255, 255) # bottom-right: 白色
+
+
+def test_copy_to_clipboard_roundtrip():
+    """给定一张图 → 复制到剪贴板 → 读回应该 pixel 相等。"""
+    from PyQt5.QtWidgets import QApplication
+
+    app = QApplication.instance() or QApplication([])
+
+    src = Image.new("RGB", (4, 4), (123, 45, 67))
+    copy_to_clipboard(src)
+
+    got_qimage = app.clipboard().image()
+    assert not got_qimage.isNull()
+    # 拿左上角像素做 spot check
+    # QRgb: 0xAARRGGBB — PIL convert("RGBA") 把不透明 RGB 的 alpha 填 0xFF
+    assert got_qimage.pixel(0, 0) == 0xFF7B2D43
