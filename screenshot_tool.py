@@ -5,6 +5,8 @@ from datetime import datetime
 from pathlib import Path
 
 from PIL import Image
+from PyQt5.QtCore import Qt, QPoint, QRect, pyqtSignal
+from PyQt5.QtWidgets import QWidget
 
 
 def save_to_desktop(image: Image.Image) -> Path:
@@ -50,3 +52,79 @@ def copy_to_clipboard(image: Image.Image) -> None:
     qimg = QImage(data, img.width, img.height, QImage.Format_RGBA8888)
 
     QApplication.clipboard().setImage(qimg)
+
+
+class ScreenshotOverlay(QWidget):
+    """全屏半透明遮罩。鼠标拖框，松开后 emit region_selected(QRect)。"""
+
+    region_selected = pyqtSignal(QRect)
+    cancelled = pyqtSignal()
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.setWindowFlags(
+            Qt.FramelessWindowHint
+            | Qt.WindowStaysOnTopHint
+            | Qt.Tool
+        )
+        self.setAttribute(Qt.WA_TranslucentBackground, True)
+        self.setAttribute(Qt.WA_NoSystemBackground, True)
+        self.setCursor(Qt.CrossCursor)
+        self._start: QPoint | None = None
+        self._end: QPoint | None = None
+        self._drag_active = False
+        self._intentional_close = False  # closeEvent 用
+
+    def start(self) -> None:
+        """覆盖所有屏幕并显示。"""
+        from PyQt5.QtGui import QGuiApplication
+        all_rect = QRect()
+        for screen in QGuiApplication.screens():
+            all_rect = all_rect.united(screen.geometry())
+        self.setGeometry(all_rect)
+        self._start = None
+        self._end = None
+        self._drag_active = False
+        self._intentional_close = False
+        self.show()
+        self.raise_()
+        self.activateWindow()
+
+    def mousePressEvent(self, event) -> None:
+        if event.button() == Qt.LeftButton:
+            self._start = event.pos()
+            self._end = event.pos()
+            self._drag_active = True
+            self.update()
+        elif event.button() == Qt.RightButton:
+            # 右键 = 取消
+            self._intentional_close = True
+            self.cancelled.emit()
+            self.close()
+
+    def mouseMoveEvent(self, event) -> None:
+        if self._drag_active:
+            self._end = event.pos()
+            self.update()
+
+    def mouseReleaseEvent(self, event) -> None:
+        if event.button() == Qt.LeftButton and self._drag_active:
+            self._drag_active = False
+            self._end = event.pos()
+            rect = QRect(self._start, self._end).normalized()
+            self._intentional_close = True
+            if rect.width() > 4 and rect.height() > 4:
+                self.region_selected.emit(rect)
+            self.close()
+
+    def keyPressEvent(self, event) -> None:
+        if event.key() == Qt.Key_Escape:
+            self._intentional_close = True
+            self.cancelled.emit()
+            self.close()
+
+    def closeEvent(self, event) -> None:
+        # Alt+F4 等非正常关闭 → 当作取消
+        if not self._intentional_close:
+            self.cancelled.emit()
+        super().closeEvent(event)

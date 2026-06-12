@@ -122,3 +122,30 @@ def test_copy_to_clipboard_roundtrip():
     # 拿左上角像素做 spot check
     # QRgb: 0xAARRGGBB — PIL convert("RGBA") 把不透明 RGB 的 alpha 填 0xFF
     assert got_qimage.pixel(0, 0) == 0xFF7B2D43
+
+
+def test_screenshot_overlay_emits_region_selected(qtbot):
+    """模拟鼠标拖框，松手后 region_selected 应 emit 正确的 QRect。"""
+    from PyQt5.QtCore import QPoint, Qt
+    from PyQt5.QtWidgets import QApplication
+    from screenshot_tool import ScreenshotOverlay
+
+    overlay = ScreenshotOverlay()
+    qtbot.addWidget(overlay)
+    overlay.resize(800, 600)
+    overlay.show()
+    qtbot.waitExposed(overlay)
+
+    captured = []
+    overlay.region_selected.connect(lambda r: captured.append(r))
+
+    start = QPoint(100, 80)
+    end = QPoint(300, 250)
+    qtbot.mousePress(overlay, Qt.LeftButton, Qt.NoModifier, start)
+    qtbot.mouseMove(overlay, end)
+    qtbot.mouseRelease(overlay, Qt.LeftButton, Qt.NoModifier, end)
+
+    assert len(captured) == 1
+    r = captured[0]
+    # QRect(p1, p2) 包含两端（inclusive），所以 300-100+1=201, 250-80+1=171
+    assert (r.left(), r.top(), r.width(), r.height()) == (100, 80, 201, 171)
