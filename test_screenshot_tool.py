@@ -31,3 +31,15 @@ def test_save_to_desktop_filename_format(fake_home):
 
     assert path.name == "screenshot_20260612_153022.png"
     assert path.parent.name == "Desktop"
+
+
+def test_save_to_desktop_collision_appends_suffix(fake_home):
+    """桌面已有同名文件时，新文件应该带 _2 后缀。"""
+    with freeze_time("2026-06-12 15:30:22"):
+        # 预 touch 一个占用名字的文件
+        (fake_home / "Desktop").mkdir(parents=True, exist_ok=True)
+        (fake_home / "Desktop" / "screenshot_20260612_153022.png").touch()
+
+        path = save_to_desktop(_one_pixel_image())
+
+    assert path.name == "screenshot_20260612_153022_2.png"
