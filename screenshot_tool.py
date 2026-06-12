@@ -107,6 +107,25 @@ class ScreenshotOverlay(QWidget):
             self._end = event.pos()
             self.update()
 
+    def paintEvent(self, event) -> None:
+        from PyQt5.QtGui import QColor, QPainter, QPen
+
+        painter = QPainter(self)
+        # 整屏半透明黑
+        painter.fillRect(self.rect(), QColor(0, 0, 0, 80))
+
+        if self._start is not None and self._end is not None:
+            rect = QRect(self._start, self._end).normalized()
+            # 挖空：清掉选区的填充
+            painter.setCompositionMode(QPainter.CompositionMode_Clear)
+            painter.fillRect(rect, Qt.transparent)
+            painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
+            # 红边框
+            pen = QPen(QColor(255, 0, 0), 1)
+            painter.setPen(pen)
+            painter.drawRect(rect)
+        painter.end()
+
     def mouseReleaseEvent(self, event) -> None:
         if event.button() == Qt.LeftButton and self._drag_active:
             self._drag_active = False
