@@ -21,8 +21,20 @@ def save_to_desktop(image: Image.Image) -> Path:
     return path
 
 
-def capture_region(*args, **kwargs):
-    raise NotImplementedError
+def capture_region(rect, screen) -> Image.Image:
+    """用 mss 截取屏幕上给定矩形（逻辑像素），返回 PIL.Image。"""
+    # 逻辑像素 → 物理像素
+    scale = screen.devicePixelRatio()
+    monitor = {
+        "left": int(rect.left() * scale),
+        "top": int(rect.top() * scale),
+        "width": int(rect.width() * scale),
+        "height": int(rect.height() * scale),
+    }
+    import mss
+    with mss.mss() as sct:
+        shot = sct.grab(monitor)
+        return Image.frombytes("RGB", shot.size, shot.rgb)
 
 
 def copy_to_clipboard(*args, **kwargs):
