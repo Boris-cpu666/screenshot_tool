@@ -195,3 +195,58 @@ def test_screenshot_overlay_right_click_cancels(qtbot):
     overlay.mousePressEvent(evt)
 
     assert cancelled == [True]
+
+
+def test_tray_app_full_flow(monkeypatch, fake_home, qtbot):
+    """on_hotkey → 选区 → capture → save → clipboard → notify 整链路。
+
+    替换 capture_region / save_to_desktop / copy_to_clipboard / 托盘通知，
+    验证 ScreenshotTrayApp 把它们正确串起来。
+    """
+    from PyQt5.QtCore import QRect
+    from PyQt5.QtWidgets import QApplication
+    from screenshot_tool import ScreenshotTrayApp
+
+    # 关键：避免在测试中真注册全局热键钩子污染当前 Windows session
+    monkeypatch.setattr("keyboard.add_hotkey", lambda *a, **kw: None)
+    monkeypatch.setattr("keyboard.unhook_all", lambda: None)
+
+    captured = []
+    saved = []
+    copied = []
+    notified = []
+
+    monkeypatch.setattr(
+        "screenshot_tool.capture_region",
+        lambda rect, screen: (captured.append(rect) or _one_pixel_image()),
+    )
+    monkeypatch.setattr(
+        "screenshot_tool.save_to_desktop",
+        lambda img: (saved.append(img) or fake_home / "fake.png"),
+    )
+    monkeypatch.setattr(
+        "screenshot_tool.copy_to_clipboard",
+        lambda img: copied.append(img),
+    )
+
+    app = ScreenshotTrayApp()
+    monkeypatch.setattr(
+        app._tray, "showMessage",
+        lambda *a, **kw: notified.append(a),
+    )
+
+    # 直接调 on_hotkey（绕过真实 keyboard hook）
+    app.on_hotkey()
+    qtbot.waitUntil(lambda: app._overlay is not None, timeout=2000)
+
+    # 模拟选区 emit
+    test_rect = QRect(10, 20, 300, 200)
+    app._overlay.region_selected.emit(test_rect)
+    qtbot.waitUntil(lambda: bool(saved), timeout=2000)
+
+    assert captured == [test_rect]
+    assert len(saved) == 1
+    assert len(copied) == 1
+    assert len(notified) == 1
+    # 通知消息应该提到文件路径
+    assert "fake.png" in notified[0][1]

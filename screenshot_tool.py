@@ -5,7 +5,7 @@ from datetime import datetime
 from pathlib import Path
 
 from PIL import Image
-from PyQt5.QtCore import Qt, QPoint, QRect, pyqtSignal
+from PyQt5.QtCore import Qt, QPoint, QRect, pyqtSignal, QObject
 from PyQt5.QtWidgets import QWidget
 
 
@@ -147,3 +147,91 @@ class ScreenshotOverlay(QWidget):
         if not self._intentional_close:
             self.cancelled.emit()
         super().closeEvent(event)
+
+
+class ScreenshotTrayApp(QObject):
+    """顶层编排：托盘 + 全局热键 + 区域选择 + 截图链路。"""
+
+    # 跨线程信号：keyboard hook 线程 → Qt 主线程
+    _hotkey_pressed = pyqtSignal()
+
+    def __init__(self) -> None:
+        super().__init__()
+        from PyQt5.QtWidgets import QAction, QApplication, QMenu, QSystemTrayIcon
+
+        if not QSystemTrayIcon.isSystemTrayAvailable():
+            raise RuntimeError("系统托盘不可用，本程序无法运行。")
+
+        # 托盘图标（占位：生成一个简单 32x32 PNG）
+        self._tray = QSystemTrayIcon(self._make_icon())
+        self._tray.setToolTip("截图小工具 (Ctrl+Alt+A)")
+
+        # 右键菜单
+        menu = QMenu()
+        quit_action = QAction("退出", menu)
+        quit_action.triggered.connect(QApplication.quit)
+        menu.addAction(quit_action)
+        self._tray.setContextMenu(menu)
+        self._tray.show()
+
+        # 跨线程：keyboard 库在 hook 线程触发，pyqtSignal 自动 QueuedConnection
+        self._hotkey_pressed.connect(self.on_hotkey)
+
+        # 全局热键
+        import keyboard
+        keyboard.add_hotkey("ctrl+alt+a", lambda: self._hotkey_pressed.emit())
+
+        # 状态
+        self._overlay: ScreenshotOverlay | None = None
+        self._overlay_active = False
+
+    @staticmethod
+    def _make_icon():
+        from PyQt5.QtCore import QSize
+        from PyQt5.QtGui import QColor, QIcon, QImage, QPainter, QPixmap
+        img = QImage(QSize(32, 32), QImage.Format_ARGB32)
+        img.fill(QColor(0, 0, 0, 0))
+        p = QPainter(img)
+        p.setRenderHint(QPainter.Antialiasing)
+        p.setBrush(QColor(70, 130, 200))
+        p.setPen(QColor(255, 255, 255))
+        p.drawRoundedRect(2, 4, 28, 24, 3, 3)
+        p.setBrush(QColor(255, 255, 255))
+        p.drawEllipse(8, 9, 6, 6)
+        p.drawEllipse(18, 9, 6, 6)
+        p.end()
+        return QIcon(QPixmap.fromImage(img))
+
+    def on_hotkey(self) -> None:
+        """主线程：启动 overlay。"""
+        if self._overlay_active:
+            return
+        self._overlay_active = True
+        self._overlay = ScreenshotOverlay()
+        self._overlay.region_selected.connect(self._on_region_selected)
+        self._overlay.cancelled.connect(self._on_cancelled)
+        self._overlay.start()
+
+    def _on_region_selected(self, rect) -> None:
+        from PyQt5.QtGui import QGuiApplication
+        from PyQt5.QtWidgets import QSystemTrayIcon
+        screen = QGuiApplication.primaryScreen()
+        image = capture_region(rect, screen)
+        path = save_to_desktop(image)
+        copy_to_clipboard(image)
+        self._tray.showMessage(
+            "截图已保存",
+            f"桌面\\{path.name}\n（已复制到剪贴板）",
+            QSystemTrayIcon.Information,
+            3000,
+        )
+        self._cleanup_overlay()
+
+    def _on_cancelled(self) -> None:
+        self._cleanup_overlay()
+
+    def _cleanup_overlay(self) -> None:
+        if self._overlay is not None:
+            self._overlay.deleteLater()
+            self._overlay = None
+        self._overlay_active = False
