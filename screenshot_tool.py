@@ -235,3 +235,17 @@ class ScreenshotTrayApp(QObject):
             self._overlay.deleteLater()
             self._overlay = None
         self._overlay_active = False
+
+
+def main() -> int:
+    import sys
+    from PyQt5.QtWidgets import QApplication
+
+    app = QApplication(sys.argv)
+    app.setQuitOnLastWindowClosed(False)  # 托盘常驻，关闭遮罩不退出
+    tray_app = ScreenshotTrayApp()
+    return app.exec_()
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
